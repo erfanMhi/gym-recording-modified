@@ -1,6 +1,3 @@
-**Status:** Archive (code is provided as-is, no updates expected)
-
-
 # Installation
 By running the following line of code you can install this repo:
 ```Bash
