@@ -1,6 +1,3 @@
-**Status:** Archive (code is provided as-is, no updates expected)
-
-
 # Installation
 By running the following line of code you can install this repo:
 ```Bash
@@ -35,27 +32,4 @@ def handle_ep(observations, actions, rewards):
   # ... learn a model
 
 playback.scan_recorded_traces(directory, handle_ep)
-```
-
-You can also use the storage_s3 module to upload and download traces from S3, so you it can run across machines.
-
-```Python
-from gym_recording import playback, storage_s3
-
-def main():
-    env = gym.make('CartPole-v0')
-    env = TraceRecordingWrapper(env)
-    # ... exercise the environment
-
-    s3url = storage_s3.upload_recording(env.directory, env.spec.id, 'openai-example-traces')
-    # ... store s3url in a database
-
-    # ... Switch to another machine
-
-    # ... load s3url from a database
-
-    def handle_ep(observations, actions, rewards):
-      # ... learn a model
-    playback.scan_recorded_traces(storage_s3.download_recording(s3url), handle_ep)
-
 ```
