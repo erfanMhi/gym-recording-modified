@@ -44,7 +44,7 @@ class TraceRecordingWrapper(gym.Wrapper):
       actions.shape = [N, action_dim]
       rewards.shape = [N]
     """
-    def __init__(self, env, directory=None, batch_size=10000, only_reward=False):
+    def __init__(self, env, directory=None, batch_size=10000, only_reward=False, preprocess_obs=None):
         """
         Create a TraceRecordingWrapper around env, writing into directory
 
@@ -60,10 +60,11 @@ class TraceRecordingWrapper(gym.Wrapper):
 
         self.recording = TraceRecording(directory, batch_size, only_reward)
         self.directory = self.recording.directory
+        self.preprocess_obs = preprocess_obs if preprocess_obs is not None else lambda obs: obs
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
-        self.recording.add_step(action, observation, reward)
+        self.recording.add_step(action, self.preprocess_obs(observation), reward)
         return observation, reward, done, info
 
     def reset(self):
