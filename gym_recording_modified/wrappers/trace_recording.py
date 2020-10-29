@@ -7,7 +7,7 @@ import numpy as np
 import gym
 from gym import error
 from gym.utils import closer
-from gym_recording.recording import TraceRecording
+from gym_recording_modified.recording import TraceRecording
 logger = logging.getLogger(__name__)
 
 __all__ = ['TraceRecordingWrapper']

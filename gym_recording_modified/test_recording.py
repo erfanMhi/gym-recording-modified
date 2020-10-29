@@ -1,7 +1,7 @@
 import os, logging, time
 import gym
-from gym_recording.wrappers import TraceRecordingWrapper
-from gym_recording.playback import scan_recorded_traces
+from gym_recording_modified.wrappers import TraceRecordingWrapper
+from gym_recording_modified.playback import scan_recorded_traces
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
