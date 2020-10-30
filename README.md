@@ -12,7 +12,7 @@ by wrapping it in a `TraceRecordingWrapper`, like this:
 
 ```Python
 import gym
-from gym_recording.wrappers import TraceRecordingWrapper
+from gym_recording_modified.wrappers import TraceRecordingWrapper
 
 def main():
     env = gym.make('CartPole-v0')
@@ -26,7 +26,7 @@ You can get the directory name from your code as `env.directory`.
 Later you can play back the recording with code like the following, which runs a callback for every episode.
 
 ```Python
-from gym_recording import playback
+from gym_recording_modified import playback
 
 def handle_ep(observations, actions, rewards):
   # ... learn a model
