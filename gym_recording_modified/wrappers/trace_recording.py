@@ -70,7 +70,7 @@ class TraceRecordingWrapper(gym.Wrapper):
     def reset(self):
         self.recording.end_episode()
         observation = self.env.reset()
-        self.recording.add_reset(observation)
+        self.recording.add_reset(self.preprocess_obs(observation))
         return observation
 
     def close(self):
