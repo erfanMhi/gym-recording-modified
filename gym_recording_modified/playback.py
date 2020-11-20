@@ -4,67 +4,53 @@ import pickle
 import logging
 import numpy as np
 from gym import error
+from typing import Union
+from gym_recording_modified.utils import constants
+
 logger = logging.getLogger(__name__)
 
+FULL_EXTRACT = ['reward', 'observation', 'action', 'episodes_end_point'] # A list of all the extractable information
 
 class TraceRecordingReader:
-    def __init__(self, directory):
+    def __init__(self, directory: str):
         self.directory = directory
         self.recordings = None
 
-    def load_pickle_file(self, path):
-        with open(path + '.pkl', 'rb') as f:
-            return pickle.load(f)
+    def _load_file(self, file_path: str):
+        extension = file_path[file_path.rfind('.')+1:]
+        if extension == 'npy':
+            return np.load(file_path)
+        elif extension == 'pkl':
+            with open(file_path, 'rb') as f:
+                return pickle.load(f)
 
-    def get_recorded_episodes(self):
+    def _get_files(self, extract: Union[list, str] = FULL_EXTRACT):
         files = os.listdir(self.directory)
-        files.sort()
-        self.recordings = []
-        for f in files[1:]: # Based on naming convention, first file would be args.csv
-            self.recordings += self.load_pickle_file(os.path.join(self.directory, f[:-4]))
+        files_stuctured = [[] for _ in range(len(extract))]
+        
+        for i, t in enumerate(extract):
+            for f in files:
+                if constants.FILE_IDENTIFIER in f:
+                    if t in f:
+                        files_stuctured[i].append(f)
+            files_stuctured[i].sort()
 
-        return self.recordings
+        return files_stuctured
 
-def scan_recorded_traces(directory, episode_cb=None, max_episodes=None, only_reward=False):
-    """
-    Go through all the traces recorded to directory, and call episode_cb for every episode.
-    Set max_episodes to end after a certain number (or you can just throw an exception from episode_cb
-    if you want to end the iteration early)
-    """
+    def get_recorded_trajectories(self, extract: Union[list, str] = FULL_EXTRACT):
+        if isinstance(extract, str):
+            extract = [extract]
+        assert isinstance(extract, list)
+        files = self._get_files(extract)
+        recordings = {t:[] for t in extract}
+        for i, t_files in enumerate(files):
+            for f in t_files:
+                recordings[extract[i]].append(self._load_file(os.path.join(self.directory, f)))
+            recordings[extract[i]] = np.concatenate(recordings[extract[i]], axis=0)
+
+        return recordings
+
+def get_recordings(directory: str, extract: Union[list, str] = FULL_EXTRACT):
     rdr = TraceRecordingReader(directory)
-    recorded_episodes = rdr.get_recorded_episodes()
-    added_episode_count = 0
-    for ep in recorded_episodes:
-        if not only_reward:
-            assert 'observations' in ep
-            assert 'actions' in ep
-            episode_cb(ep['observations'], ep['actions'], ep['rewards'])
-        else:
-            episode_cb(ep['rewards'])
-        added_episode_count += 1
-        if max_episodes is not None and added_episode_count >= max_episodes: return
-
-def get_recordings(directory, max_episodes=None, only_reward=False):
-    observations = []
-    actions = []
-    rewards = []
-    rdr = TraceRecordingReader(directory)
-    recorded_episodes = rdr.get_recorded_episodes()
-    added_episode_count = 0
-    for ep in recorded_episodes:
-        if not only_reward:
-            assert 'observations' in ep
-            assert 'actions' in ep
-            observations.append(ep['observations'])
-            actions.append(ep['actions'])
-            rewards.append(ep['rewards'])
-        else:
-            rewards.append(ep['rewards'])
-        added_episode_count += 1
-        if max_episodes is not None and added_episode_count >= max_episodes: 
-            if only_reward:
-                return rewards
-            return observations, actions, rewards
-    if only_reward:
-        return rewards
-    return observations, actions, rewards
+    recorded_trajectories = rdr.get_recorded_trajectories(extract=extract)
+    return recorded_trajectories

@@ -5,13 +5,12 @@ import numpy as np
 import gym
 import pickle
 from gym import error
-
+from gym_recording_modified.utils import constants
 logger = logging.getLogger(__name__)
-
 
 class TraceRecording(object):
     _id_counter = 0
-    def __init__(self, directory=None, batch_size=10000, only_reward=False):
+    def __init__(self, directory=None, batch_size=None, only_reward=False):
         """
         Create a TraceRecording, writing into directory
         """
@@ -21,7 +20,12 @@ class TraceRecording(object):
             os.mkdir(directory)
 
         self.directory = directory
-        self.file_prefix = 'openaigym.trace.{}.{}'.format(self._id_counter, os.getpid())
+
+        self.file_prefix = constants.FILE_IDENTIFIER + '.trace.{}.{}.{}'
+        self.reward_file_prefix =  self.file_prefix.format('rewards', self._id_counter, os.getpid())
+        self.observation_file_prefix =  self.file_prefix.format('observations', self._id_counter, os.getpid())
+        self.action_file_prefix =  self.file_prefix.format('actions', self._id_counter, os.getpid())
+        self.eep_file_prefix = self.file_prefix.format('episodes_end_point', self._id_counter, os.getpid())
         TraceRecording._id_counter += 1
 
         self.closed = False
@@ -29,16 +33,12 @@ class TraceRecording(object):
         self.actions = []
         self.observations = []
         self.rewards = []
+        self.episodes_end_point = [0]
         self.episode_id = 0
 
         self.buffered_step_count = 0
-        self.buffer_batch_size = batch_size
+        self.buffer_batch_size = batch_size if batch_size is not None else float('+inf')
         self.only_reward = only_reward
-
-        self.episodes_first = 0
-        self.episodes = []
-        self.batches = []
-
 
     def add_reset(self, observation):
         assert not self.closed
@@ -58,28 +58,12 @@ class TraceRecording(object):
         if len(observations) == 0, nothing has happened yet.
         If len(observations) == 1, then len(actions) == 0, and we have only called reset and done a null episode.
         """
-        if len(self.observations) > 0:
-            if len(self.episodes)==0:
-                self.episodes_first = self.episode_id
-            
-            if self.only_reward:
-                self.episodes.append({
-                    'rewards': self.rewards,
-                })
-            else:
-                self.episodes.append({
-                    'actions': self.actions,
-                    'observations': self.observations,
-                    'rewards': self.rewards,
-                })
- 
-            self.actions = []
-            self.observations = []
-            self.rewards = []
-            self.episode_id += 1
+        
+        self.episodes_end_point.append(self.buffered_step_count)
+        self.episode_id += 1
 
-            if self.buffered_step_count >= self.buffer_batch_size:
-                self.save_complete()
+        if self.buffered_step_count >= self.buffer_batch_size:
+            self.save_complete()
 
     def save_complete(self):
         """
@@ -89,18 +73,29 @@ class TraceRecording(object):
         don't compress much, only by 30%, and it's a goal to be able to read the files from C++ or a browser someday.
         """
 
-        # Each batch of data will be saved in a different file
-        batch_fn = '{}.ep{:09}'.format(self.file_prefix, self.episodes_first)
-        self.save_to_file(os.path.join(self.directory, batch_fn), self.episodes)
+        # Creating the path to rewards, actions, and observations, and episodes end points
+        rewards_batch_fn = '{}.ep{:09}'.format(self.reward_file_prefix, self.buffered_step_count)
+        actions_batch_fn = '{}.ep{:09}'.format(self.action_file_prefix, self.buffered_step_count)
+        observations_batch_fn = '{}.ep{:09}'.format(self.observation_file_prefix, self.buffered_step_count)
+        eep_batch_fn = '{}.ep{:09}'.format(self.eep_file_prefix, self.buffered_step_count)
+
+        # Saving data
+        self.save_to_file(os.path.join(self.directory, rewards_batch_fn), self.rewards)
+        if not self.only_reward:
+            self.save_to_file(os.path.join(self.directory, observations_batch_fn), self.observations)
+            self.save_to_file(os.path.join(self.directory, actions_batch_fn), self.actions)
+        self.save_to_file(os.path.join(self.directory, eep_batch_fn), self.episodes_end_point)
         
-        self.episodes = []
-        self.episodes_first = None
         self.buffered_step_count = 0
 
-    def save_to_file(self, path, data):
-        with open(path + '.pkl', 'wb') as f:
-            pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
-
+    def save_to_file(self, path, data, saving_type='numpy'):
+        if saving_type=='pickle':
+            with open(path + '.pkl', 'wb') as f:
+                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+        elif saving_type=='numpy':
+            np.save(path, np.array(data))
+        else:
+            raise ValueError('saving_type value cannot be identified: {}'.format(saving_type))
 
     def close(self):
         """
@@ -109,7 +104,7 @@ class TraceRecording(object):
         """
         if not self.closed:
             self.end_episode()
-            if len(self.episodes) > 0:
+            if len(self.rewards) > 0:
                 self.save_complete()
             self.closed = True
             logger.info('Wrote traces to %s', self.directory)

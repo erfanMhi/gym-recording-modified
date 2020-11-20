@@ -44,7 +44,7 @@ class TraceRecordingWrapper(gym.Wrapper):
       actions.shape = [N, action_dim]
       rewards.shape = [N]
     """
-    def __init__(self, env, directory=None, batch_size=10000, only_reward=False, preprocess_obs=None):
+    def __init__(self, env, directory=None, batch_size=None, only_reward=False, preprocess_obs=None):
         """
         Create a TraceRecordingWrapper around env, writing into directory
 
