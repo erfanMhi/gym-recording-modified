@@ -29,20 +29,23 @@ class TraceRecording(object):
         TraceRecording._id_counter += 1
 
         self.closed = False
-
-        self.actions = []
-        self.observations = []
-        self.rewards = []
-        self.episodes_end_point = [0]
+        
+        self.reset_values()
+        self.episodes_end_point.append(0)
         self.episode_id = 0
 
         self.buffered_step_count = 0
         self.buffer_batch_size = batch_size if batch_size is not None else float('+inf')
         self.only_reward = only_reward
 
+    def reset_values(self):
+        self.actions = []
+        self.observations = []
+        self.rewards = []
+        self.episodes_end_point = []
+
     def add_reset(self, observation):
         assert not self.closed
-        self.end_episode()
         self.observations.append(observation)
 
     def add_step(self, action, observation, reward):
@@ -86,6 +89,7 @@ class TraceRecording(object):
             self.save_to_file(os.path.join(self.directory, actions_batch_fn), self.actions)
         self.save_to_file(os.path.join(self.directory, eep_batch_fn), self.episodes_end_point)
         
+        self.reset_values()
         self.buffered_step_count = 0
 
     def save_to_file(self, path, data, saving_type='numpy'):
@@ -103,7 +107,7 @@ class TraceRecording(object):
         you can free up memory by calling it explicitly when you're done
         """
         if not self.closed:
-            self.end_episode()
+            self.save_complete()
             if len(self.rewards) > 0:
                 self.save_complete()
             self.closed = True
