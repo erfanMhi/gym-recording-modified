@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 FULL_EXTRACT = ['reward', 'observation', 'action', 'episodes_end_point'] # A list of all the extractable information
 
 class TraceRecordingReader:
+
     def __init__(self, directory: str):
         self.directory = directory
         self.recordings = None

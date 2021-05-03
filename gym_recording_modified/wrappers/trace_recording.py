@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = ['TraceRecordingWrapper']
 
-
 trace_record_closer = closer.Closer()
 
 class TraceRecordingWrapper(gym.Wrapper):
@@ -44,7 +43,7 @@ class TraceRecordingWrapper(gym.Wrapper):
       actions.shape = [N, action_dim]
       rewards.shape = [N]
     """
-    def __init__(self, env, directory=None, batch_size=None, only_reward=False, preprocess_obs=None):
+    def __init__(self, env, directory=None, batch_size=None, only_reward=False, preprocess_obs=None, save_type='episodic_return', log_interval=10000):
         """
         Create a TraceRecordingWrapper around env, writing into directory
 
@@ -58,7 +57,7 @@ class TraceRecordingWrapper(gym.Wrapper):
         
         trace_record_closer.register(self)
 
-        self.recording = TraceRecording(directory, batch_size, only_reward)
+        self.recording = TraceRecording(directory, batch_size, only_reward, save_type=save_type, log_interval=log_interval)
         self.directory = self.recording.directory
         self.preprocess_obs = preprocess_obs if preprocess_obs is not None else lambda obs: obs
 
