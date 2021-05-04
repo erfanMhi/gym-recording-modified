@@ -10,11 +10,12 @@ logger = logging.getLogger(__name__)
 
 class TraceRecording(object):
     _id_counter = 0
-    def __init__(self, directory=None, batch_size=None, only_reward=True, save_type='episodic_return', log_interval=10000):
+    def __init__(self, directory=None, batch_size=None, only_reward=True, save_type='episodic_return', log_interval=10000, logger=None):
         """
         Create a TraceRecording, writing into directory
         """
 
+        self.logger = logger
         self.save_type = save_type
         self.log_interval = log_interval
 
@@ -49,8 +50,8 @@ class TraceRecording(object):
         self.rewards = []
         self.episode_returns = []
         self.episode_steps = []
-        self.ep_returns_list = []
-        self.ep_steps_list = []
+        self.ep_returns_list = [] # used for storing aggregated rewards per episode each self.log_interval steps
+        self.ep_steps_list = [] # used for storing aggregated steps per episode each self.log_interval steps
         self.episodes_end_point = []
 
     def add_reset(self, observation):
@@ -70,11 +71,15 @@ class TraceRecording(object):
         if self.buffered_step_count%self.log_interval == 0:
             if self.save_type == 'episodic_return':
                 self.ep_returns_list.append(np.mean(self.episode_returns))
+                if self.logger is not None:
+                    self.logger.info('timestep: {} - Episodic aggregated return: max: {}, min: {}, mean: {}, std: {}'.format(self.buffered_step_count, np.max(self.episode_returns), np.min(self.episode_returns), self.ep_returns_list[-1], np.std(self.episode_returns)))
                 self.episode_returns = []
             elif self.save_type == 'reward_per_step':
                 pass
             elif self.save_type == 'episodic_steps':
                 self.ep_steps_list.append(np.mean(self.episode_steps))
+                if self.logger is not None:
+                    self.logger.info('timestep: {} - Episodic aggregated steps: max: {}, min: {}, mean: {}, std: {}'.format(self.buffered_step_count, np.max(self.episode_steps), np.min(self.episode_steps), self.ep_steps_list[-1], np.std(self.episode_steps)))
                 self.episode_steps = []
             else:
                 raise ValueError('Save_type is not defined')
