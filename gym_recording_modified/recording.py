@@ -68,19 +68,33 @@ class TraceRecording(object):
         self.rewards.append(reward)
         self.buffered_step_count += 1
         
+       #  if self.buffered_step_count%self.log_interval == 0:
+            # if self.save_type == 'episodic_return':
+                # self.ep_returns_list.append(np.mean(self.episode_returns))
+                # if self.logger is not None:
+                    # self.logger.info('timestep: {} - Episodic aggregated return: max: {}, min: {}, mean: {}, std: {}'.format(self.buffered_step_count, np.max(self.episode_returns), np.min(self.episode_returns), self.ep_returns_list[-1], np.std(self.episode_returns)))
+                # self.episode_returns = []
+            # elif self.save_type == 'reward_per_step':
+                # pass
+            # elif self.save_type == 'episodic_steps':
+                # self.ep_steps_list.append(np.mean(self.episode_steps))
+                # if self.logger is not None:
+                    # self.logger.info('timestep: {} - Episodic aggregated steps: max: {}, min: {}, mean: {}, std: {}'.format(self.buffered_step_count, np.max(self.episode_steps), np.min(self.episode_steps), self.ep_steps_list[-1], np.std(self.episode_steps)))
+                # self.episode_steps = []
+            # else:
+       #          raise ValueError('Save_type is not defined')
+        
         if self.buffered_step_count%self.log_interval == 0:
-            if self.save_type == 'episodic_return':
+            if self.save_type == 'episodic_return' or self.save_type == 'episodic_steps':
                 self.ep_returns_list.append(np.mean(self.episode_returns))
-                if self.logger is not None:
-                    self.logger.info('timestep: {} - Episodic aggregated return: max: {}, min: {}, mean: {}, std: {}'.format(self.buffered_step_count, np.max(self.episode_returns), np.min(self.episode_returns), self.ep_returns_list[-1], np.std(self.episode_returns)))
-                self.episode_returns = []
-            elif self.save_type == 'reward_per_step':
-                pass
-            elif self.save_type == 'episodic_steps':
                 self.ep_steps_list.append(np.mean(self.episode_steps))
                 if self.logger is not None:
+                    self.logger.info('timestep: {} - Episodic aggregated return: max: {}, min: {}, mean: {}, std: {}'.format(self.buffered_step_count, np.max(self.episode_returns), np.min(self.episode_returns), self.ep_returns_list[-1], np.std(self.episode_returns)))
                     self.logger.info('timestep: {} - Episodic aggregated steps: max: {}, min: {}, mean: {}, std: {}'.format(self.buffered_step_count, np.max(self.episode_steps), np.min(self.episode_steps), self.ep_steps_list[-1], np.std(self.episode_steps)))
+                self.episode_returns = []
                 self.episode_steps = []
+            elif self.save_type == 'reward_per_step':
+                pass
             else:
                 raise ValueError('Save_type is not defined')
  
@@ -89,15 +103,24 @@ class TraceRecording(object):
         if len(observations) == 0, nothing has happened yet.
         If len(observations) == 1, then len(actions) == 0, and we have only called reset and done a null episode.
         """
-
-        if self.save_type == 'episodic_return':
+        
+       #  if self.save_type == 'episodic_return':
+            # self.episode_returns.append(np.sum(self.rewards))
+            # self.rewards = []
+        # elif self.save_type == 'reward_per_step':
+            # pass
+        # elif self.save_type == 'episodic_steps':
+            # self.episode_steps.append(len(self.rewards))
+            # self.rewards = []
+        # else:
+       #      raise ValueError('Save_type is not defined')
+        
+        if self.save_type == 'episodic_return' or self.save_type == 'episodic_steps':
             self.episode_returns.append(np.sum(self.rewards))
+            self.episode_steps.append(len(self.rewards))
             self.rewards = []
         elif self.save_type == 'reward_per_step':
             pass
-        elif self.save_type == 'episodic_steps':
-            self.episode_steps.append(len(self.rewards))
-            self.rewards = []
         else:
             raise ValueError('Save_type is not defined')
         
@@ -128,13 +151,23 @@ class TraceRecording(object):
             self.save_to_file(os.path.join(self.directory, actions_batch_fn), self.actions)
 
         # Saving data
-        if self.save_type == 'episodic_return':
+       #  if self.save_type == 'episodic_return':
+            # self.save_to_file(os.path.join(self.directory, episode_returns_batch_fn), self.ep_returns_list)
+        # elif self.save_type == 'reward_per_step':
+            # self.save_to_file(os.path.join(self.directory, rewards_batch_fn), self.rewards)
+            # self.save_to_file(os.path.join(self.directory, eep_batch_fn), self.episodes_end_point)
+        # elif self.save_type == 'episodic_steps':
+            # self.save_to_file(os.path.join(self.directory, episode_steps_batch_fn), self.ep_steps_list)
+        # else:
+       #      raise ValueError('Save_type is not defined')
+         
+        # Saving data
+        if self.save_type == 'episodic_return' or self.save_type == 'episodic_steps':
             self.save_to_file(os.path.join(self.directory, episode_returns_batch_fn), self.ep_returns_list)
+            self.save_to_file(os.path.join(self.directory, episode_steps_batch_fn), self.ep_steps_list)
         elif self.save_type == 'reward_per_step':
             self.save_to_file(os.path.join(self.directory, rewards_batch_fn), self.rewards)
             self.save_to_file(os.path.join(self.directory, eep_batch_fn), self.episodes_end_point)
-        elif self.save_type == 'episodic_steps':
-            self.save_to_file(os.path.join(self.directory, episode_steps_batch_fn), self.ep_steps_list)
         else:
             raise ValueError('Save_type is not defined')
  
