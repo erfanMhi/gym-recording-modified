@@ -9,7 +9,7 @@ from gym_recording_modified.utils import constants
 
 logger = logging.getLogger(__name__)
 
-FULL_EXTRACT = ['reward', 'observation', 'action', 'episodes_end_point'] # A list of all the extractable information
+FULL_EXTRACT = ['reward', 'observation', 'action', 'episodes_end_point', 'episode_returns', 'episode_steps'] # A list of all the extractable information
 
 class TraceRecordingReader:
 

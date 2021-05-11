@@ -24,7 +24,6 @@ class TraceRecording(object):
             os.mkdir(directory)
 
         self.directory = directory
-
         self.file_prefix = constants.FILE_IDENTIFIER + '.trace.{}.{}.{}'
         self.episode_steps_file_prefix = self.file_prefix.format('episode_steps', self._id_counter, os.getpid())
         self.episode_returns_file_prefix = self.file_prefix.format('episode_returns', self._id_counter, os.getpid())
