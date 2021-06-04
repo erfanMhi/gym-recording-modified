@@ -9,7 +9,7 @@ from gym_recording_modified.utils import constants
 
 logger = logging.getLogger(__name__)
 
-FULL_EXTRACT = ['reward', 'observation', 'action', 'episodes_end_point', 'episode_returns', 'episode_steps', 'losses', 'td_errors', 'weight_differences'] # A list of all the extractable information
+FULL_EXTRACT = ['reward', 'observation', 'action', 'episodes_end_point', 'episode_returns', 'episode_steps'] # A list of all the extractable information
 
 class TraceRecordingReader:
 
@@ -47,8 +47,10 @@ class TraceRecordingReader:
         for i, t_files in enumerate(files):
             for f in t_files:
                 recordings[extract[i]].append(self._load_file(os.path.join(self.directory, f)))
-            recordings[extract[i]] = np.concatenate(recordings[extract[i]], axis=0)
-
+            try:
+                recordings[extract[i]] = np.concatenate(recordings[extract[i]], axis=0)
+            except:
+                print('failed: ', self.directory)
         return recordings
 
 def get_recordings(directory: str, extract: Union[list, str] = FULL_EXTRACT):

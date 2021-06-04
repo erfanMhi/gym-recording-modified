@@ -1,2 +1,2 @@
 #FILE_IDENTIFIER = 'openaigym'
-FILE_IDENTIFIER = ''
+FILE_IDENTIFIER = 'openaigym'
